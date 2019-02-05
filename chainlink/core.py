@@ -1,7 +1,12 @@
 import argparse
+import datetime
 from pprint import pprint
 
 import requests
+from redis import Redis
+from rq import Queue
+
+queue = Queue(connection=Redis())
 
 
 def parse_requirements(file_text):
@@ -28,17 +33,20 @@ def get_requirements_text():
 
 
 def get_github_from_pypi(package, version):
+    print("Starting new request")
     res = requests.get("https://pypi.python.org/pypi/{}/{}/json".format(package, version))
     if res.status_code != 200:
         print(res.text)
         raise Exception("Got error requesting from pypii")
     res_json = res.json()
     home_page = res_json['info']['home_page']
+    pprint(home_page)
     if "github.com" not in home_page:
-        return None
+        return home_page
     else:
         home_page = home_page.replace("https://github.com/", "")
         home_page = home_page.replace("http://github.com", "")
+        pprint(home_page)
         split_b = home_page.split("/")
         github = {
             "owner": split_b[0],
@@ -83,5 +91,97 @@ def get_issues_from_requirements_text(req_text):
         repo = repos_issues[repo_name]
         issues = get_github_issues(repo["owner"], repo["package"])
         repos_issues[repo_name]["issues"] = issues
+    return repos_issues
+
+
+def mp_get_github_from_pypi(req_text):
+    repos_issues = []
+    reqs = parse_requirements(req_text)
+    jobs = []
+    for req in reqs:
+        jobs.append(queue.enqueue(get_github_from_pypi, req[0], req[1]))
+
+    # Wait until all the jobs are finished
+    start_time = datetime.datetime.now()
+    finished = False
+    while not finished:
+        all_done = True
+        for job in jobs:
+            if not job.result:
+                all_done = False
+                break
+        if all_done:
+            finished = True
+        else:
+            proc_time = datetime.datetime.now() - start_time
+            if proc_time.seconds >= 2 * 60:
+                raise Exception("Timed out getting results from pypi workers")
+            finished = False
+
+    # Get the results from the jobs
+    for job in jobs:
+        result = job.result
+        if type(result) is not dict:
+            continue
+        repos_issues.append(result)
+    return repos_issues
+
+
+def mp_get_issues_from_requirements(req_text):
+    repos_issues = {}
+    reqs = parse_requirements(req_text)
+    jobs = []
+    for req in reqs:
+        jobs.append(queue.enqueue(get_github_from_pypi, req[0], req[1]))
+
+    # Wait until all the jobs are finished
+    start_time = datetime.datetime.now()
+    finished = False
+    while not finished:
+        all_done = True
+        for job in jobs:
+            if not job.result:
+                all_done = False
+                break
+        if all_done:
+            finished = True
+        else:
+            proc_time = datetime.datetime.now() - start_time
+            if proc_time.seconds >= 2 * 60:
+                raise Exception("Timed out getting results from pypi workers")
+            finished = False
+
+    # Get the results from the jobs
+    for job in jobs:
+        result = job.result
+        if type(result) is not dict:
+            continue
+        repos_issues[result["package"]] = result
+
+    github_jobs = {}
+    for repo_name in repos_issues:
+        repo = repos_issues[repo_name]
+        github_jobs[repo_name] = queue.enqueue(get_github_issues, repo["owner"], repo["package"])
+
+    start_time = datetime.datetime.now()
+    github_finished = False
+    while not github_finished:
+        all_done = True
+        for repo_name in github_jobs:
+            job = github_jobs[repo_name]
+            if not job.result:
+                all_done = False
+                break
+        if all_done:
+            github_finished = True
+        else:
+            proc_time = datetime.datetime.now() - start_time
+            if proc_time.seconds >= 2 * 60:
+                raise Exception("Timed out getting results from github workers")
+            github_finished = False
+
+    for repo_name in github_jobs:
+        job = github_jobs[repo_name]
+        repos_issues[repo_name]["issues"] = job.result
     return repos_issues
 

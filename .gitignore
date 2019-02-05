@@ -1,2 +1,6 @@
 venv/
 .idea/
+supervisord_logs/
+supervisord.log
+supervisord.pid
+dump.rdb
