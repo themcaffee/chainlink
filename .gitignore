@@ -4,3 +4,4 @@ supervisord_logs/
 supervisord.log
 supervisord.pid
 dump.rdb
+__pycache__/
