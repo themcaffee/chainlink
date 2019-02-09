@@ -12,7 +12,7 @@ deploy-frontend:
     - cd frontend
     - yarn
     - yarn build
-    - aws s3 sync dist/ s3://chainlink.mitchmcaffee.com
+    - aws s3 sync dist/ s3://chainlink.mitchmcaffee.com --acl public-read
   artifacts:
     paths:
       - frontend/dist
