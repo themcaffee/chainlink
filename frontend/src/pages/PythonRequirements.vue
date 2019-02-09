@@ -4,10 +4,10 @@
             <button @click="closeGithubError()" type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             Maximum github requests reached. Please login to github to make more requests.
         </div>
-        <h1>Chainlink <small>Python Requirements</small></h1>
+        <h1>Python Requirement</h1>
         <form @submit.prevent="getIssues()">
             <div class="form-group">
-                <label clas="control-label">requirements.txt</label>
+                <label clas="control-label">Enter requirements.txt here:</label>
                 <textarea v-model="requirementsText" class="form-control" rows="10"></textarea>
             </div>
             <button class="btn btn-default pull-right" type="submit">Get issues</button>
