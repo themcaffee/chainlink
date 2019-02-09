@@ -1,5 +1,5 @@
 before_script:
-  - apt-get update -qq && apt-get install -y -qq nodejs npm yarn
+  - apt-get update -qq && apt-get install -y -qq nodejs yarn
 
 build-image:
   stage: build
