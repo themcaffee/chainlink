@@ -1,0 +1,29 @@
+---
+stages:
+  - build
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq nodejs npm yarn
+
+build-image:
+  stage: build
+  script:
+    - cd frontend && yarn
+    - cd frontend && yarn build
+  only:
+    - dev
+    - master
+
+deploy-prod:
+  stage: deploy
+  before_script:
+    - apt-get update
+    - apt-get -qq install python python-pip ca-certificates
+    - pip install awscli
+  script:
+    - aws s3 sync frontend/dist/ s3://chainlink.mitchmcaffee.com
+  artifacts:
+    paths:
+      - frontend/dist
+  only:
+    - master

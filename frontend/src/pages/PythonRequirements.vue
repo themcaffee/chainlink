@@ -5,7 +5,6 @@
             Maximum github requests reached. Please login to github to make more requests.
         </div>
         <h1>Chainlink <small>Python Requirements</small></h1>
-        <a :href="'https://github.com/login/oauth/authorize?client_id=' + githubClientID">Sign in with Github</a>
         <form @submit.prevent="getIssues()">
             <div class="form-group">
                 <label clas="control-label">requirements.txt</label>
@@ -20,7 +19,7 @@
                 </div>
             </div>
             <ul class="list-group">
-                <li class="list-group-item" v-for="issue in project['issues']">
+                <li class="list-group-item" v-for="issue in project['issues']" :key="issue['title']">
                     <a :href="issue['url']">{{ issue['title'] }} </a>
                     <small class="pull-right">{{ issue['created_at'] }}</small>
                 </li>
@@ -36,7 +35,6 @@
             return {
                 requirementsText: '',
                 issues: [],
-                githubClientID: '',
                 githubError: false
             }
         },
