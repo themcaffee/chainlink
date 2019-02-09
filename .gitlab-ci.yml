@@ -6,6 +6,8 @@ build-frontend:
     - apt-get remove cmdtest
     - apt-get install -y -qq nodejs yarn
   script:
+    - pwd
+    - ls
     - cd frontend && yarn
     - cd frontend && yarn build
   only:
