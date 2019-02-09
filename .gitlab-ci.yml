@@ -1,29 +1,18 @@
-
-build-frontend:
-  stage: build
+deploy-frontend:
+  stage: deploy
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq apt-transport-https
     - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
     - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
-    - apt-get install -y nodejs yarn
+    - apt-get install -y nodejs yarn python python-pip ca-certificates
+    - pip install awscli
   script:
     - cd frontend
     - yarn
     - yarn build
-  only:
-    - dev
-    - master
-
-deploy-frontend:
-  stage: deploy
-  before_script:
-    - apt-get update
-    - apt-get -qq install python python-pip ca-certificates
-    - pip install awscli
-  script:
-    - aws s3 sync frontend/dist/ s3://chainlink.mitchmcaffee.com
+    - aws s3 sync dist/ s3://chainlink.mitchmcaffee.com
   artifacts:
     paths:
       - frontend/dist
