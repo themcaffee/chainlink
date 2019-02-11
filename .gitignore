@@ -1,3 +1,4 @@
+*.pem
 venv/
 .idea/
 supervisord_logs/
